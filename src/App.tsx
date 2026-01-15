@@ -1,74 +1,93 @@
-import React, { useState, useEffect } from 'react';
-import { Coins } from 'lucide-react';
-import { toast, Toaster } from 'sonner';
-import { 
-  DEFAULT_PARAMETERS, 
-  DEFAULT_ENABLED, 
-  UI_TEXT 
-} from './config/constants';
-import { readGcodeMetadata } from './lib/utils';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  calculateCosts,
-  formatCurrency,
-  validateMinutes,
-  validatePositiveNumber,
-} from './lib/calculations';
-import type { Parameters, ParameterConfig, CostBreakdown } from './lib/calculations';
-import WorkDetailsForm from './components/WorkDetailsForm';
-import ParametersPanel from './components/ParametersPanel';
-import CostCard from './components/CostCard';
-import ParameterEditorModal from './components/ParameterEditorModal';
+  DEFAULT_PARAMETERS,
+  DEFAULT_ENABLED,
+  UI_TEXTS,
+  type Language,
+} from "./config/constants";
+import { readGcodeMetadata } from "./lib/utils";
+import { calculateCosts } from "./lib/calculations";
+import type {
+  Parameters,
+  ParameterConfig,
+  CostBreakdown,
+} from "./lib/calculations";
+import WorkDetailsForm from "./components/WorkDetailsForm";
+import ParametersPanel from "./components/ParametersPanel";
+import CostCard from "./components/CostCard";
+import ParameterEditorModal from "./components/ParameterEditorModal";
 
 export default function App() {
-  const [grams, setGrams] = useState<string>('');
-  const [hours, setHours] = useState<string>('');
-  const [minutes, setMinutes] = useState<string>('');
+  const [grams, setGrams] = useState<string>("");
+  const [hours, setHours] = useState<string>("");
+  const [minutes, setMinutes] = useState<string>("");
   const [showParameterEditor, setShowParameterEditor] = useState(false);
-  const [fileName, setFileName] = useState<string>('');
-  const [projectName, setProjectName] = useState<string>('');
+  const [fileName, setFileName] = useState<string>("");
+  const [projectName, setProjectName] = useState<string>("");
 
-  const [parameterConfig, setParameterConfig] = useState<ParameterConfig>(() => {
-    const saved = localStorage.getItem('3d-calc-parameters');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Ensure useDiscount exists with default value
-        if (!parsed.useDiscount) {
-          parsed.useDiscount = false;
+  const [parameterConfig, setParameterConfig] = useState<ParameterConfig>(
+    () => {
+      const saved = localStorage.getItem("3d-calc-parameters");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (!parsed.useDiscount) parsed.useDiscount = false;
+          return parsed;
+        } catch {
         }
-        return parsed;
-      } catch {
-        // Fall back to defaults if parsing fails
       }
-    }
-    return {
-      enabled: DEFAULT_ENABLED,
-      value: { ...DEFAULT_PARAMETERS },
-      useDiscount: false, // Default to markup mode
-    };
-  });
-
-  const [tempParameters, setTempParameters] = useState<Parameters>(parameterConfig.value);
-  const [tempEnabled, setTempEnabled] = useState<Record<keyof Parameters, boolean>>(parameterConfig.enabled);
-  const [tempUseDiscount, setTempUseDiscount] = useState<boolean>(parameterConfig.useDiscount);
-
-  useEffect(() => {
-    localStorage.setItem('3d-calc-parameters', JSON.stringify(parameterConfig));
-  }, [parameterConfig]);
-
-  const costs: CostBreakdown = calculateCosts(
-    parseFloat(grams) || 0,
-    parseFloat(hours) || 0,
-    parseFloat(minutes) || 0,
-    { enabled: parameterConfig.enabled, value: parameterConfig.value, useDiscount: parameterConfig.useDiscount }
+      return {
+        enabled: DEFAULT_ENABLED,
+        value: { ...DEFAULT_PARAMETERS },
+        useDiscount: false,
+      };
+    },
   );
 
-  const handleOpenGcode = async () => {
+  const [tempParameters, setTempParameters] = useState<Parameters>(
+    parameterConfig.value,
+  );
+  const [tempEnabled, setTempEnabled] = useState<
+    Record<keyof Parameters, boolean>
+  >(parameterConfig.enabled);
+  const [tempUseDiscount, setTempUseDiscount] = useState<boolean>(
+    parameterConfig.useDiscount,
+  );
+
+  const [language, setLanguage] = useState<Language>(() => {
+    return (localStorage.getItem("language") as Language) || "en";
+  });
+  const UI_TEXT = UI_TEXTS[language];
+
+  useEffect(() => {
+    localStorage.setItem("3d-calc-parameters", JSON.stringify(parameterConfig));
+  }, [parameterConfig]);
+
+  useEffect(() => {
+    localStorage.setItem("language", language);
+  }, [language]);
+
+  const costs: CostBreakdown = useMemo(
+    () =>
+      calculateCosts(
+        parseFloat(grams) || 0,
+        parseFloat(hours) || 0,
+        parseFloat(minutes) || 0,
+        {
+          enabled: parameterConfig.enabled,
+          value: parameterConfig.value,
+          useDiscount: parameterConfig.useDiscount,
+        },
+      ),
+    [grams, hours, minutes, parameterConfig],
+  );
+
+  const handleOpenGcode = useCallback(async () => {
     try {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.gcode';
-      
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".gcode";
+
       const file = await new Promise<File | null>((resolve) => {
         input.onchange = (e) => {
           resolve((e.target as HTMLInputElement).files?.[0] || null);
@@ -78,55 +97,63 @@ export default function App() {
 
       if (!file) return;
 
-      // Use the full filename with extension for display
       const fullFileName = file.name;
       setFileName(fullFileName);
-      // Don't set projectName, let it remain empty so the filename shows as placeholder
 
       const { filamentUsed, printTime } = await readGcodeMetadata(file);
-      
-      // Update filament weight
       setGrams(filamentUsed.toString());
-      
-      // Parse print time (e.g. "4h 51m" or "3h 15m 30s")
+
       const hoursMatch = printTime.match(/(\d+)h/);
       const minutesMatch = printTime.match(/(\d+)m/);
-      
-      setHours(hoursMatch ? hoursMatch[1] : '0');
-      setMinutes(minutesMatch ? minutesMatch[1] : '0');
-
+      setHours(hoursMatch ? hoursMatch[1] : "0");
+      setMinutes(minutesMatch ? minutesMatch[1] : "0");
     } catch (error: any) {
-      if (error.message.includes('Missing metadata')) {
-        toast.error(UI_TEXT.TOAST.GCODE_INVALID);
+      if (error.message.includes("Missing metadata")) {
+        console.error("Missing metadata in G-code file");
       } else {
-        toast.error(UI_TEXT.TOAST.GCODE_ERROR);
+        console.error("Error processing G-code file");
       }
     }
-  };
+  }, [UI_TEXT]);
 
-  const saveParameters = () => {
+  const saveParameters = useCallback(() => {
     setParameterConfig({
       enabled: tempEnabled,
       value: tempParameters,
       useDiscount: tempUseDiscount,
     });
     setShowParameterEditor(false);
-    toast.success(UI_TEXT.TOAST.PARAMS_SAVED);
-  };
+  }, [tempEnabled, tempParameters, tempUseDiscount]);
 
-  const resetToDefaults = () => {
+  const resetToDefaults = useCallback(() => {
     setTempParameters({ ...DEFAULT_PARAMETERS });
     setTempEnabled({ ...DEFAULT_ENABLED });
-    setTempUseDiscount(false); // Reset to markup mode
-  };
+    setTempUseDiscount(false);
+  }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--dark-bg)', color: 'var(--dark-text)' }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: "transparent", color: "var(--text)" }}
+    >
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <header className="text-center mb-8">
+        <header className="relative text-center mb-8">
+          <button
+            onClick={() => setLanguage(language === "en" ? "ro" : "en")}
+            className="absolute right-0 top-0 flex items-center gap-1 px-3 py-1 rounded-lg text-sm transition"
+            style={{
+              background: "var(--card)",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            {language === "en" ? "🇬🇧" : "🇷🇴"}
+          </button>
+
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Coins className="w-8 h-8" style={{ color: 'var(--dark-text)' }} />
-            <h1 className="text-3xl font-bold" style={{ color: 'var(--dark-text)' }}>SliceCost</h1>
+            <h1 className="text-3xl font-bold">
+              Slice<span style={{ color: "var(--accent)" }}>Cost</span>
+            </h1>
           </div>
         </header>
 
@@ -142,7 +169,7 @@ export default function App() {
               setHours={setHours}
               setMinutes={setMinutes}
               setProjectName={setProjectName}
-              onOpenGcode={handleOpenGcode}
+              onOpenGcode={() => void handleOpenGcode()}
               UI_TEXT={UI_TEXT}
             />
           </div>
@@ -167,6 +194,7 @@ export default function App() {
               grams={grams}
               hours={hours}
               minutes={minutes}
+              projectName={projectName}
               UI_TEXT={UI_TEXT}
             />
           </div>
@@ -185,7 +213,6 @@ export default function App() {
         />
       </div>
 
-      <Toaster theme="dark" />
     </div>
   );
 }

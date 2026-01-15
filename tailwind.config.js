@@ -1,34 +1,17 @@
-/** @type {import('tailwindcss').Config} */
-export default {
-  darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+module.exports = {
+  content: ["./src/**/*.{html,js,jsx,ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        primary: '#6b7280',
-        'primary-hover': '#4b5563',
-        secondary: '#636363',
-        
-        // Greyscale colors only
-        'dark-bg': '#181818',
-        'dark-card': '#1c1c1cff',
-        'dark-border': '#6c6c6cff',
-        'dark-gray': '#343434',
-        
-        // Text colors
-        'dark-text': '#f9fafb',
-        'dark-secondary': '#636363',
+        accent: "var(--accent)",
+        muted: "var(--muted)",
+        "dark-bg": "var(--dark-bg)",
+        "dark-card": "var(--dark-card)",
+        "dark-border": "var(--dark-border)",
+        "dark-text": "var(--dark-text)",
       },
-      spacing: {
-        'section': '2rem',
-      },
-      borderRadius: {
-        'container': '0.5rem',
-      },
+      fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
     },
   },
   plugins: [],
-}
+};

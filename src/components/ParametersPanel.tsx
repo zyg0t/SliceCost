@@ -1,6 +1,6 @@
-import React from 'react';
-import { Settings } from 'lucide-react';
-import type { Parameters, ParameterConfig } from '../lib/calculations';
+import React from "react";
+import { Settings } from "lucide-react";
+import type { Parameters, ParameterConfig } from "../lib/calculations.tsx";
 
 interface ParametersPanelProps {
   parameterConfig: ParameterConfig;
@@ -9,23 +9,40 @@ interface ParametersPanelProps {
   UI_TEXT: any;
 }
 
-export function ParametersPanel({ parameterConfig, setParameterConfig, onEditClick, UI_TEXT }: ParametersPanelProps) {
+export function ParametersPanel({
+  parameterConfig,
+  setParameterConfig,
+  onEditClick,
+  UI_TEXT,
+}: ParametersPanelProps) {
   return (
-    <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--dark-card)', borderColor: 'var(--dark-border)', borderWidth: '1px', borderStyle: 'solid' }}>
+    <div
+      className="rounded-lg p-6"
+      style={{
+        backgroundColor: "var(--bg1)",
+        borderColor: "var(--border-subtle)",
+        borderWidth: "1px",
+        borderStyle: "solid",
+      }}
+    >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--dark-text)' }}>
-          <Settings className="w-5 h-5" style={{ color: 'var(--dark-text)' }} />
+        <h2
+          className="text-xl font-semibold flex items-center gap-2"
+          style={{ color: "var(--text)" }}
+        >
+          <Settings className="w-5 h-5" style={{ color: "var(--accent)" }} />
           {UI_TEXT.PARAMETERS.TITLE}
         </h2>
+
         <button
           onClick={onEditClick}
-          className="px-3 py-1 rounded text-sm transition-colors"
-          style={{ 
-            backgroundColor: 'var(--dark-gray)', 
-            borderColor: 'var(--dark-border)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            color: 'var(--dark-text)'
+          className="px-3 py-1 rounded-xl text-sm"
+          style={{
+            backgroundColor: "var(--bg1)",
+            borderColor: "var(--border-subtle)",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            color: "#ffffff",
           }}
         >
           {UI_TEXT.PARAMETERS.EDIT_BUTTON}
@@ -35,14 +52,17 @@ export function ParametersPanel({ parameterConfig, setParameterConfig, onEditCli
       <div className="space-y-3">
         {Object.entries(parameterConfig.value).map(([key, value]) => {
           const enabled = parameterConfig.enabled[key as keyof Parameters];
+
           const labels = {
             pricePerKg: UI_TEXT.PARAMETER_LABELS.PRICE_PER_KG,
             pricePerHour: UI_TEXT.PARAMETER_LABELS.PRICE_PER_HOUR,
             flatWorkFee: UI_TEXT.PARAMETER_LABELS.FLAT_WORK_FEE,
-            electricityConsumption: UI_TEXT.PARAMETER_LABELS.ELECTRICITY_CONSUMPTION,
+            electricityConsumption:
+              UI_TEXT.PARAMETER_LABELS.ELECTRICITY_CONSUMPTION,
             electricityPrice: UI_TEXT.PARAMETER_LABELS.ELECTRICITY_PRICE,
             markup: UI_TEXT.PARAMETER_LABELS.MARKUP,
           } as const;
+
           const units = {
             pricePerKg: UI_TEXT.UNITS.PER_KG,
             pricePerHour: UI_TEXT.UNITS.PER_HOUR,
@@ -54,46 +74,52 @@ export function ParametersPanel({ parameterConfig, setParameterConfig, onEditCli
 
           return (
             <div
-              key={key}
-              className={`flex items-center justify-between p-3 rounded`}
-              style={{ 
-                backgroundColor: enabled ? 'var(--dark-gray)' : 'var(--dark-card)',
-                borderColor: 'var(--dark-border)',
-                borderWidth: '1px',
-                borderStyle: 'solid'
+              key={`${key}-${enabled}`}
+              className="flex items-center justify-between p-3 rounded-xl"
+              style={{
+                backgroundColor: "var(--bg1)",
+                borderColor: "var(--border-subtle)",
+                borderWidth: "1px",
+                borderStyle: "solid",
               }}
             >
               <div className="flex items-center gap-3">
-                {key === 'markup' ? (
+                {key === "markup" ? (
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={enabled}
-                      onChange={(e) => {
-                        setParameterConfig(prev => ({
+                      onChange={(e) =>
+                        setParameterConfig((prev) => ({
                           ...prev,
                           enabled: {
                             ...prev.enabled,
                             [key]: e.target.checked,
                           },
-                        }));
-                      }}
-                      style={{ 
-                        borderColor: 'var(--dark-border)',
-                        backgroundColor: 'white'
-                      }}
+                        }))
+                      }
                       className="w-4 h-4 rounded focus:ring-gray-500"
                     />
-                    <span style={{ color: enabled ? 'var(--dark-text)' : 'var(--dark-secondary)' }}>
-                      {parameterConfig.useDiscount ? UI_TEXT.PARAMETER_LABELS.DISCOUNT : UI_TEXT.PARAMETER_LABELS.MARKUP}
+
+                    <span
+                      style={{
+                        color: enabled ? "var(--text)" : "var(--muted)",
+                      }}
+                    >
+                      {parameterConfig.useDiscount
+                        ? UI_TEXT.PARAMETER_LABELS.DISCOUNT
+                        : UI_TEXT.PARAMETER_LABELS.MARKUP}
                     </span>
+
                     <button
-                      onClick={() => setParameterConfig(prev => ({
-                        ...prev,
-                        useDiscount: !prev.useDiscount
-                      }))}
-                      className="p-1 transition-colors transform hover:rotate-[360deg] transition-transform duration-500"
-                      style={{ color: 'var(--dark-secondary)' }}
+                      onClick={() =>
+                        setParameterConfig((prev) => ({
+                          ...prev,
+                          useDiscount: !prev.useDiscount,
+                        }))
+                      }
+                      className="rotate-btn"
+                      style={{ color: "var(--muted)" }}
                     >
                       ↻
                     </button>
@@ -103,28 +129,34 @@ export function ParametersPanel({ parameterConfig, setParameterConfig, onEditCli
                     <input
                       type="checkbox"
                       checked={enabled}
-                      onChange={(e) => {
-                        setParameterConfig(prev => ({
+                      onChange={(e) =>
+                        setParameterConfig((prev) => ({
                           ...prev,
                           enabled: {
                             ...prev.enabled,
                             [key]: e.target.checked,
                           },
-                        }));
-                      }}
-                      style={{ 
-                        borderColor: 'var(--dark-border)',
-                        backgroundColor: 'white'
-                      }}
+                        }))
+                      }
                       className="w-4 h-4 rounded focus:ring-gray-500"
                     />
-                    <span style={{ color: enabled ? 'var(--dark-text)' : 'var(--dark-secondary)' }}>
+                    <span
+                      style={{
+                        color: enabled ? "var(--text)" : "var(--muted)",
+                      }}
+                    >
                       {labels[key as keyof typeof labels]}
                     </span>
                   </>
                 )}
               </div>
-              <span className="font-mono" style={{ color: enabled ? 'var(--dark-text)' : 'var(--dark-secondary)' }}>
+
+              <span
+                className="font-mono"
+                style={{
+                  color: enabled ? "var(--accent)" : "var(--muted)",
+                }}
+              >
                 {value} {units[key as keyof typeof units]}
               </span>
             </div>
